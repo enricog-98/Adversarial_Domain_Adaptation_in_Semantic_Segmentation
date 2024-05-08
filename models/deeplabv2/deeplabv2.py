@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import requests
+import os
 
 affine_par = True
 
@@ -10,13 +10,11 @@ class Bottleneck(nn.Module):
 
     def __init__(self, inplanes, planes, stride=1, dilation=1, downsample=None):
         super(Bottleneck, self).__init__()
-        # change
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, stride=stride, bias=False)
         self.bn1 = nn.BatchNorm2d(planes, affine=affine_par)
         for i in self.bn1.parameters():
             i.requires_grad = False
         padding = dilation
-        # change
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1,
                                padding=padding, bias=False, dilation=dilation)
         self.bn2 = nn.BatchNorm2d(planes, affine=affine_par)
@@ -174,23 +172,13 @@ class ResNetMulti(nn.Module):
                 {'params': self.get_10x_lr_params(), 'lr': 10 * lr}]
 
 
-def get_deeplab_v2(num_classes=19, pretrain=True, pretrain_model_path='https://drive.usercontent.google.com/download?id=1ZX0UCXvJwqd2uBGCX7LI2n-DfMg3t74v&export=download&authuser=0&confirm=t&uuid=7fd4ec30-2089-47c3-b051-d8c23130cb15&at=APZUnTUrCfaBe_eauothm3N3GgGD%3A1714750724047'):#DeepLab_resnet_pretrained_imagenet.pth'):
+def get_deeplab_v2(num_classes=19, pretrain=True, pretrain_model_path='DeepLab_resnet_pretrained_imagenet.pth'):
     model = ResNetMulti(Bottleneck, [3, 4, 23, 3], num_classes)
 
     # Pretraining loading
     if pretrain:
         print('Deeplab pretraining loading...')
-
-        # Download the .pth file
-        response = requests.get(pretrain_model_path)
-        local_file_path = 'local_model.pth'
-        with open(local_file_path, 'wb') as f:
-            f.write(response.content)
-        
-        # Load the downloaded .pth file
-        saved_state_dict = torch.load(local_file_path)
-
-        #saved_state_dict = torch.load(pretrain_model_path)
+        saved_state_dict = torch.load(os.path.join(os.path.dirname(os.getcwd()), pretrain_model_path))
 
         new_params = model.state_dict().copy()
         for i in saved_state_dict:
