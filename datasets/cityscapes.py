@@ -5,6 +5,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 import numpy as np
 from torchvision import transforms
+from torchvision.transforms import Lambda
 
 class CityscapesCustom(Dataset):
     def __init__(self, root_dir, split):
@@ -12,8 +13,15 @@ class CityscapesCustom(Dataset):
         self.root_dir = root_dir
         self.split = split
         
-        self.transform = transforms.Compose([
+        self.transform_image = transforms.Compose([
+            transforms.Resize((512, 1024)),
             transforms.ToTensor(),
+        ])
+
+        self.transform_label = transforms.Compose([
+            transforms.Resize((512, 1024)),
+            transforms.ToTensor(),
+            Lambda(lambda x: x.long()),
         ])
 
         self.images_dir = os.path.join(self.root_dir, 'images', self.split)
@@ -36,8 +44,8 @@ class CityscapesCustom(Dataset):
         image = Image.open(self.images[idx])
         label = Image.open(self.labels[idx])
 
-        image = self.transform(image)
-        label = self.transform(label)
+        image = self.transform_image(image)
+        label = self.transform_label(label)
 
         return image, label
 
