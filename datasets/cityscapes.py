@@ -57,14 +57,14 @@ class CityscapesCustom(Dataset):
         }
         
         self.transform_image = transforms.Compose([
-            transforms.Resize((512, 1024)),
+            transforms.Resize((64, 128)),
             transforms.ToTensor(),
             #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) #mean and std from ImageNet
         ])
 
         self.transform_label = transforms.Compose([
-            transforms.Resize((512, 1024)),
-            Lambda(lambda pic: torch.from_numpy(np.array(pic, np.int64)))
+            transforms.Resize((64, 128)),
+            Lambda(lambda pic: torch.from_numpy(np.array(pic, np.int64))),
             #transforms.ToTensor(),
         ])
 
