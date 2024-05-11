@@ -1,4 +1,29 @@
 import numpy as np
+import torch
+import time
+
+def test_latency_FPS(model, height, width, device):
+    image = torch.randn(1, 3, height, width).to(device)
+    iterations = 1000
+    latency = []
+    FPS = []
+
+    for i in range(iterations):
+        start = time.time()
+        output = model(image)
+        end = time.time()
+
+        latencyi = end - start
+        latency.append(latencyi)
+        FPSi = 1/latencyi
+        FPS.append(FPSi)
+
+    mean_latency = np.mean(latency)
+    std_latency = np.std(latency)
+    mean_FPS = np.mean(FPS)
+    std_FPS = np.std(FPS)
+
+    return 'Mean latency: {:.2f} +/- {:.2f} seconds \nMean FPS: {:.2f} +/- {:.2f} frames per second'.format(mean_latency, std_latency, mean_FPS, std_FPS)
 
 
 def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1,
