@@ -1,8 +1,9 @@
 #Training and validation loops
 import torch
 import time
+from utils import poly_lr_scheduler
 
-def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, device, n_epochs):
+def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, device, n_epochs, lr_schedule):
     best_iou = 0.0
     best_epoch = 0
     
@@ -11,6 +12,8 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
         model.train()
         train_loss = 0.0
         for i, (inputs, labels) in enumerate(train_dataloader):
+            if i == 10:
+                break
             inputs, labels = inputs.to(device), labels.to(device)
             
             optimizer.zero_grad()
@@ -18,6 +21,10 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
             
             loss = criterion(outputs, labels)
             loss.backward()
+
+            if lr_schedule is True:
+                poly_lr_scheduler(optimizer, init_lr=2.5e-2, iter=epoch, max_iter=n_epochs)
+                        
             optimizer.step()
             train_loss += loss.item()
             
@@ -29,6 +36,8 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
         union = 0
         with torch.no_grad():
             for i, (inputs, labels) in enumerate(test_dataloader):
+                if i == 5:
+                    break
                 inputs, labels = inputs.to(device), labels.to(device)
                 
                 outputs = model(inputs)
