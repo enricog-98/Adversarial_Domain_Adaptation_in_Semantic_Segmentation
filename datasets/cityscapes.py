@@ -16,24 +16,12 @@ class CityscapesCustom(Dataset):
         self.height = height
         self.width = width
 
-        #self.void_classes = [0, 1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 18, 29, 30, -1]
-        #self.valid_classes = [7, 8, 11, 12, 13, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33]
-        #self.class_names = ["unlabelled", "road", "sidewalk", "building", "wall", "fence", "pole", "traffic_light",
-        #                    "traffic_sign", "vegetation", "terrain", "sky", "person", "rider", "car", "truck",
-        #                    "bus", "train", "motorcycle", "bicycle"
+        #self.class_names = ["road", "sidewalk", "building", "wall", "fence", "pole", "traffic_light", "traffic_sign",
+        #                    "vegetation", "terrain", "sky", "person", "rider", "car", "truck", "bus", "train",
+        #                    "motorcycle", "bicycle"
         #]
 
-        #self.ignore_index = 255
-        #self.class_map = dict(zip(self.valid_classes, range(19)))
-
-        # Mapping of ignore categories and valid ones (numbered from 1-19)
-        #self.mapping_20 = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 1, 8: 2, 9: 0,
-        #                   10: 0, 11: 3, 12: 4, 13: 5, 14: 0, 15: 0, 16: 0, 17: 6, 18: 0, 19: 7,
-        #                   20: 8, 21: 9, 22: 10, 23: 11, 24: 12, 25: 13, 26: 14, 27: 15, 28: 16, 29: 0,
-        #                   30: 0, 31: 17, 32: 18, 33: 19, -1: 0
-        #}
-
-        #Mapping of ignore categories (255) and valid ones (numbered from 0-18)
+        #Mapping of ignore categories (255) and valid ones (in range 0-18)
         self.mapping_19 = {0: 255, 1: 255, 2: 255, 3: 255, 4: 255, 5: 255, 6: 255, 7: 0, 8: 1, 9: 255,
                            10: 255, 11: 2, 12: 3, 13: 4, 14: 255, 15: 255, 16: 255, 17: 5, 18: 255, 19: 6,
                            20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12, 26: 13, 27: 14, 28: 15, 29: 255,
@@ -74,21 +62,13 @@ class CityscapesCustom(Dataset):
         
         label = Image.open(self.labels[idx])
         label = self.transform_label(label)
-        label = self.encode_labels(label)#0 to 19
-        #label = self.encode_segmap(label)#0 to 255
+        label = self.encode_labels(label)
         
         return image, label
 
     def __len__(self):
         return len(self.images)
-    
-    #def encode_segmap(self, mask):
-        #for _voidc in self.void_classes:
-            #mask[mask == _voidc] = self.ignore_index
-        #for _validc in self.valid_classes:
-            #mask[mask == _validc] = self.class_map[_validc]
-        #return mask
-    
+        
     def encode_labels(self, mask):
         label_mask = np.zeros_like(mask)
         for k in self.mapping_19:
