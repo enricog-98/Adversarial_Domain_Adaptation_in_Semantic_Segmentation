@@ -3,7 +3,7 @@ import torch
 import time
 from fvcore.nn import FlopCountAnalysis, flop_count_table
 
-def test_latency_FPS(model, height, width, device):
+def test_latency_FPS(model, device, height, width):
     image = torch.randn(1, 3, height, width).to(device)
     iterations = 1000
     latency = []
@@ -15,18 +15,20 @@ def test_latency_FPS(model, height, width, device):
         end = time.time()
 
         latencyi = end - start
-        latency.append(latencyi)
-        FPSi = 1/latencyi
-        FPS.append(FPSi)
+
+        if latencyi != 0.0:
+            latency.append(latencyi)
+            FPSi = 1/latencyi
+            FPS.append(FPSi)
 
     mean_latency = np.mean(latency)
     std_latency = np.std(latency)
     mean_FPS = np.mean(FPS)
     std_FPS = np.std(FPS)
-
+    
     return 'Mean latency: {:.4f} +/- {:.4f} seconds \nMean FPS: {:.2f} +/- {:.2f} frames per second'.format(mean_latency, std_latency, mean_FPS, std_FPS)
 
-def test_FLOPs_params(model, height, width, device):
+def test_FLOPs_params(model, device, height, width):
     image = torch.zeros(1, 3, height, width).to(device)
     flops = FlopCountAnalysis(model, image)
     return flop_count_table(flops)
