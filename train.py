@@ -4,7 +4,7 @@ import time
 from tqdm import tqdm
 from utils import poly_lr_scheduler
 
-def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, device, n_epochs, lr_schedule):
+def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, device, n_epochs, lr_schedule, model_name):
     best_iou = 0.0
     best_epoch = 0
     
@@ -52,12 +52,24 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
                 test_loop.set_description(f'Epoch {epoch+1}/{n_epochs} (Test)')
                             
         test_iou = 100*test_intersection/test_union
+
+        # Save a checkpoint after each epoch
+        checkpoint = {
+            'epoch': epoch+1,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'train_iou': train_iou,
+            'test_iou': test_iou,
+            'best_iou': best_iou,
+            'best_epoch': best_epoch
+        }
+        torch.save(checkpoint, f'checkpoints/{model_name}_checkpoint_epoch_{epoch+1}.pth')
         
         #Early stopping condition
         if test_iou > best_iou:
             best_iou = test_iou
             best_epoch = epoch
-            torch.save(model.state_dict(), 'best_model.pth')
+            torch.save(checkpoint, f'checkpoints/{model_name}_best_epoch_{epoch+1}.pth')
 
         end = time.time()
 
