@@ -1,6 +1,7 @@
 #Training and validation loops
 import torch
 import time
+from tqdm import tqdm
 from utils import poly_lr_scheduler
 
 def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, device, n_epochs, lr_schedule):
@@ -12,9 +13,8 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
         model.train()
         train_intersection = 0
         train_union = 0
-        for i, (inputs, labels) in enumerate(train_dataloader):
-            if i == 10:
-                break
+        train_loop = tqdm(enumerate(train_dataloader), total=len(train_dataloader), leave=False)
+        for i, (inputs, labels) in train_loop:
             inputs, labels = inputs.to(device), labels.to(device)
             
             optimizer.zero_grad()
@@ -29,16 +29,17 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
             predictions = torch.argmax(outputs, dim=1)
             train_intersection += torch.logical_and(labels == predictions, labels != 255).sum()
             train_union += torch.logical_or(labels == predictions, labels != 255).sum()
+
+            train_loop.set_description(f'Epoch {epoch+1}/{n_epochs} (Train)')
             
         train_iou = 100*train_intersection/train_union
         
         model.eval()
         test_intersection = 0
         test_union = 0
+        test_loop = tqdm(enumerate(test_dataloader), total=len(test_dataloader), leave=False)
         with torch.no_grad():
-            for i, (inputs, labels) in enumerate(test_dataloader):
-                if i == 5:
-                    break
+            for i, (inputs, labels) in test_loop:
                 inputs, labels = inputs.to(device), labels.to(device)
                 
                 outputs = model(inputs)
@@ -47,6 +48,8 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
                 predictions = torch.argmax(outputs, dim=1)                
                 test_intersection += torch.logical_and(labels == predictions, labels != 255).sum()
                 test_union += torch.logical_or(labels == predictions, labels != 255).sum()
+
+                test_loop.set_description(f'Epoch {epoch+1}/{n_epochs} (Test)')
                             
         test_iou = 100*test_intersection/test_union
         
