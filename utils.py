@@ -35,7 +35,7 @@ def test_FLOPs_params(model, device, height, width):
 
 
 def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1,
-                      max_iter=300, power=0.9):
+                      max_iter=50, power=0.9):
     """Polynomial decay of learning rate
             :param init_lr is base learning rate
             :param iter is a current iteration
@@ -52,13 +52,13 @@ def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1,
     return lr
 
 
-def fast_hist(a, b, n):
+def fast_hist(label, predict, n):
     '''
     a and b are predict and mask respectively
     n is the number of classes
     '''
-    k = (a >= 0) & (a < n)
-    return np.bincount(n * a[k].astype(int) + b[k], minlength=n ** 2).reshape(n, n)
+    k = (label >= 0) & (label < n)
+    return np.bincount(n * label[k].astype(int) + predict[k], minlength=n ** 2).reshape(n, n)
 
 
 def per_class_iou(hist):

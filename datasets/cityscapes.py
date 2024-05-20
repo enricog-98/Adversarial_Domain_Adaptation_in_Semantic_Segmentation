@@ -16,11 +16,6 @@ class CityscapesCustom(Dataset):
         self.height = height
         self.width = width
 
-        #self.class_names = ["road", "sidewalk", "building", "wall", "fence", "pole", "traffic_light", "traffic_sign",
-        #                    "vegetation", "terrain", "sky", "person", "rider", "car", "truck", "bus", "train",
-        #                    "motorcycle", "bicycle"
-        #]
-
         #Mapping of ignore categories (255) and valid ones (in range 0-18)
         self.mapping_19 = {0: 255, 1: 255, 2: 255, 3: 255, 4: 255, 5: 255, 6: 255, 7: 0, 8: 1, 9: 255,
                            10: 255, 11: 2, 12: 3, 13: 4, 14: 255, 15: 255, 16: 255, 17: 5, 18: 255, 19: 6,

@@ -1,20 +1,26 @@
 #Training and validation loops
 import torch
 import time
+import numpy as np
 from tqdm import tqdm
-from utils import poly_lr_scheduler
+from utils import poly_lr_scheduler, fast_hist, per_class_iou
 
-def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, device, n_epochs, lr_schedule, model_name):
-    best_iou = 0.0
+def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, class_names, device, n_epochs, lr_schedule, model_name):    
+    n_classes = len(class_names)
+    best_miou = 0.0
+    best_class_iou = np.zeros(n_classes)
     best_epoch = 0
+    all_train_iou = []
+    all_test_iou = []
     
     for epoch in range(n_epochs):
         start = time.time()
         model.train()
-        train_intersection = 0
-        train_union = 0
+        train_hist = np.zeros((n_classes, n_classes))
         train_loop = tqdm(enumerate(train_dataloader), total=len(train_dataloader), leave=False)
         for i, (inputs, labels) in train_loop:
+            if i == 10:
+                break
             inputs, labels = inputs.to(device), labels.to(device)
             
             optimizer.zero_grad()
@@ -27,52 +33,65 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
             optimizer.step()
             
             predictions = torch.argmax(outputs, dim=1)
-            train_intersection += torch.logical_and(labels == predictions, labels != 255).sum()
-            train_union += torch.logical_or(labels == predictions, labels != 255).sum()
-
+            train_hist += fast_hist(labels.numpy(), predictions.numpy(), n_classes)
+            
             train_loop.set_description(f'Epoch {epoch+1}/{n_epochs} (Train)')
             
-        train_iou = 100*train_intersection/train_union
+        train_class_iou = 100*per_class_iou(train_hist)
+        all_train_iou.append(train_class_iou)
+        train_miou = np.mean(train_class_iou)
         
         model.eval()
-        test_intersection = 0
-        test_union = 0
+        test_hist = np.zeros((n_classes, n_classes))
         test_loop = tqdm(enumerate(test_dataloader), total=len(test_dataloader), leave=False)
         with torch.no_grad():
             for i, (inputs, labels) in test_loop:
+                if i == 3:
+                    break
                 inputs, labels = inputs.to(device), labels.to(device)
                 
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
 
-                predictions = torch.argmax(outputs, dim=1)                
-                test_intersection += torch.logical_and(labels == predictions, labels != 255).sum()
-                test_union += torch.logical_or(labels == predictions, labels != 255).sum()
-
+                predictions = torch.argmax(outputs, dim=1)
+                test_hist += fast_hist(labels.numpy(), predictions.numpy(), n_classes)
+                
                 test_loop.set_description(f'Epoch {epoch+1}/{n_epochs} (Test)')
                             
-        test_iou = 100*test_intersection/test_union
-
-        # Save a checkpoint after each epoch
+        test_class_iou = 100*per_class_iou(test_hist)
+        all_test_iou.append(test_class_iou)
+        test_miou = np.mean(test_class_iou)
+        
+        #Create a checkpoint dictionary
         checkpoint = {
             'epoch': epoch+1,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
-            'train_iou': train_iou,
-            'test_iou': test_iou,
-            'best_iou': best_iou,
+            'train_iou': train_miou,
+            'test_iou': test_miou,
+            'best_miou': best_miou,
+            'best_class_iou': best_class_iou,
             'best_epoch': best_epoch
         }
-        torch.save(checkpoint, f'checkpoints/{model_name}_checkpoint_epoch_{epoch+1}.pth')
+
+        #Save checkpoint every 5 epochs
+        #if (epoch+1) % 5 == 0:
+            #torch.save(checkpoint, f'checkpoints/{model_name}_checkpoint_epoch_{epoch+1}.pth')
         
         #Early stopping condition
-        if test_iou > best_iou:
-            best_iou = test_iou
+        if test_miou > best_miou:
+            best_miou = test_miou
+            best_class_iou = test_class_iou
             best_epoch = epoch
-            torch.save(checkpoint, f'checkpoints/{model_name}_best_epoch_{epoch+1}.pth')
+            #torch.save(checkpoint, f'checkpoints/{model_name}_best_epoch_{epoch+1}.pth')
 
         end = time.time()
 
-        print(f'Epoch {epoch+1}/{n_epochs}, Train IoU: {train_iou:.2f}% ({train_intersection}/{train_union}), Test IoU: {test_iou:.2f}% ({test_intersection}/{test_union}) [{(end-start) // 60:.0f}m {(end-start) % 60:.0f}s]')
+        print(f'Epoch {epoch+1}/{n_epochs} [{(end-start) // 60:.0f}m {(end-start) % 60:.0f}s]')
+        print(f'Train mIoU: {train_miou:.2f}%, Test mIoU: {test_miou:.2f}%')
 
-    print(f'Best IoU: {best_iou:.2f}% at epoch {best_epoch+1}')        
+        for class_name, iou in zip(class_names, test_class_iou):
+            print(f'{class_name}: {iou:.2f}%', end=' ')
+
+    print(f'\nBest IoU: {best_miou:.2f}% at epoch {best_epoch+1}')
+    return all_train_iou, all_test_iou        
