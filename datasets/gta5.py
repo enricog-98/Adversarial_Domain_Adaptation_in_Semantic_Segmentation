@@ -8,20 +8,32 @@ import numpy as np
 from torchvision import transforms
 from torchvision.transforms import Lambda
 
-#Need to be modified
-
 class GTA5Custom(Dataset):
     def __init__(self, root_dir, height, width):
         super(GTA5Custom, self).__init__()
         self.root_dir = root_dir
         self.height = height
         self.width = width
-
-        #Mapping of ignore categories (255) and valid ones (in range 0-18)
-        self.mapping_19 = {0: 255, 1: 255, 2: 255, 3: 255, 4: 255, 5: 255, 6: 255, 7: 0, 8: 1, 9: 255,
-                           10: 255, 11: 2, 12: 3, 13: 4, 14: 255, 15: 255, 16: 255, 17: 5, 18: 255, 19: 6,
-                           20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12, 26: 13, 27: 14, 28: 15, 29: 255,
-                           30: 255, 31: 16, 32: 17, 33: 18, -1: 255
+        self.color_to_id = {
+            (128, 64, 128):0,   #road
+            (244, 35, 232): 1,  # sidewalk
+            (70, 70, 70): 2,    # building
+            (102, 102, 156): 3, # wall
+            (190, 153, 153): 4, # fence
+            (153, 153, 153): 5, # pole
+            (250, 170, 30): 6,  # light
+            (220, 220, 0): 7,   # sign
+            (107, 142, 35): 8,  # vegetation
+            (152, 251, 152): 9, # terrain
+            (70, 130, 180): 10, # sky
+            (220, 20, 60): 11,  # person
+            (255, 0, 0): 12,    # rider
+            (0, 0, 142): 13,    # car
+            (0, 0, 70): 14,     # truck
+            (0, 60, 100): 15,   # bus
+            (0, 80, 100): 16,   # train
+            (0, 0, 230): 17,    # motorcycle
+            (119, 11, 32): 18   # bicycle
         }
         
         self.transform_image = transforms.Compose([
@@ -32,8 +44,7 @@ class GTA5Custom(Dataset):
 
         self.transform_label = transforms.Compose([
             transforms.Resize((self.height, self.width), interpolation=Image.NEAREST),
-            Lambda(lambda pic: torch.from_numpy(np.array(pic, np.int64))),
-            #transforms.ToTensor(),
+            Lambda(lambda pic: torch.from_numpy(np.array(pic, np.int64)))
         ])
 
         self.images_dir = os.path.join(self.root_dir, 'images')
@@ -50,17 +61,25 @@ class GTA5Custom(Dataset):
         image = Image.open(self.images[idx])
         image = self.transform_image(image)
         
-        label = Image.open(self.labels[idx])
+        label = Image.open(self.labels[idx]).convert('RGB')
         label = self.transform_label(label)
-        label = self.encode_labels(label)
+        label = self.map_color_to_class(label)
         
         return image, label
 
     def __len__(self):
         return len(self.images)
-    
-    def encode_labels(self, mask):
-        label_mask = np.zeros_like(mask)
-        for k in self.mapping_19:
-            label_mask[mask == k] = self.mapping_19[k]
-        return label_mask
+
+    def map_color_to_class(self, label):
+        # Convert the RGB image to a single integer value
+        label_int = label[:, :, 0]*256*256 + label[:, :, 1]*256 + label[:, :, 2]
+
+        # Create a tensor of the same shape as the input image, filled with 255 (the class id for 'unlabeled')
+        class_id_image = torch.full_like(label_int, 255)
+
+        # Replace each unique color value with the corresponding class id
+        for color, class_id in self.color_to_id.items():
+            color_int = color[0]*256*256 + color[1]*256 + color[2]
+            class_id_image = torch.where(label_int == color_int, class_id, class_id_image)
+
+        return class_id_image

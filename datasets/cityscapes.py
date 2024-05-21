@@ -15,13 +15,6 @@ class CityscapesCustom(Dataset):
         self.split = split
         self.height = height
         self.width = width
-
-        #Mapping of ignore categories (255) and valid ones (in range 0-18)
-        self.mapping_19 = {0: 255, 1: 255, 2: 255, 3: 255, 4: 255, 5: 255, 6: 255, 7: 0, 8: 1, 9: 255,
-                           10: 255, 11: 2, 12: 3, 13: 4, 14: 255, 15: 255, 16: 255, 17: 5, 18: 255, 19: 6,
-                           20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12, 26: 13, 27: 14, 28: 15, 29: 255,
-                           30: 255, 31: 16, 32: 17, 33: 18, -1: 255
-        }
         
         self.transform_image = transforms.Compose([
             transforms.Resize((self.height, self.width), interpolation=Image.BILINEAR),
@@ -31,8 +24,7 @@ class CityscapesCustom(Dataset):
 
         self.transform_label = transforms.Compose([
             transforms.Resize((self.height, self.width), interpolation=Image.NEAREST),
-            Lambda(lambda pic: torch.from_numpy(np.array(pic, np.int64))),
-            #transforms.ToTensor(),
+            Lambda(lambda pic: torch.from_numpy(np.array(pic, np.int64)))
         ])
 
         self.images_dir = os.path.join(self.root_dir, 'images', self.split)
@@ -52,20 +44,13 @@ class CityscapesCustom(Dataset):
                 self.labels.append(os.path.join(self.labels_dir, city, city_image.replace('leftImg8bit', 'gtFine_labelTrainIds')))
 
     def __getitem__(self, idx):
-        image = Image.open(self.images[idx])
+        image = Image.open(self.images[idx]).convert('RGB')
         image = self.transform_image(image)
         
-        label = Image.open(self.labels[idx])
+        label = Image.open(self.labels[idx]).convert('L')
         label = self.transform_label(label)
-        label = self.encode_labels(label)
         
         return image, label
 
     def __len__(self):
         return len(self.images)
-        
-    def encode_labels(self, mask):
-        label_mask = np.zeros_like(mask)
-        for k in self.mapping_19:
-            label_mask[mask == k] = self.mapping_19[k]
-        return label_mask
