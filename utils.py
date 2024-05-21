@@ -4,10 +4,10 @@ import time
 from fvcore.nn import FlopCountAnalysis, flop_count_table
 import matplotlib.pyplot as plt
 
-def plot_miou_over_epochs(all_train_miou, all_test_miou, early_stop_epoch):
+def plot_miou_over_epochs(all_train_miou, all_test_miou, best_epoch):
     plt.plot(all_train_miou, label='Train')
     plt.plot(all_test_miou, label='Test')
-    plt.axvline(x=early_stop_epoch, color='r', linestyle='--', label='Early Stopping Epoch')
+    plt.axvline(x=best_epoch, color='r', linestyle='--', label='Best Epoch')
     plt.xlabel('Epoch')
     plt.ylabel('mIoU%')
     plt.legend()

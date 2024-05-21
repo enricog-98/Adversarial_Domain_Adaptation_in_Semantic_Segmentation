@@ -19,8 +19,6 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
         train_hist = np.zeros((n_classes, n_classes))
         train_loop = tqdm(enumerate(train_dataloader), total=len(train_dataloader), leave=False)
         for i, (inputs, labels) in train_loop:
-            if i == 30:
-                break
             inputs, labels = inputs.to(device), labels.to(device)
             
             optimizer.zero_grad()
@@ -45,8 +43,6 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
         test_loop = tqdm(enumerate(test_dataloader), total=len(test_dataloader), leave=False)
         with torch.no_grad():
             for i, (inputs, labels) in test_loop:
-                if i == 10:
-                    break
                 inputs, labels = inputs.to(device), labels.to(device)
                 
                 outputs = model(inputs)
@@ -88,9 +84,10 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
 
         print(f'Epoch {epoch+1}/{n_epochs} [{(end-start) // 60:.0f}m {(end-start) % 60:.0f}s]')
         print(f'Train mIoU: {train_miou:.2f}%, Test mIoU: {test_miou:.2f}%')
+        for class_name, iou in zip(class_names, test_class_iou):
+            print(f'{class_name}: {iou:.2f}%', end=' ')
 
-    print(f'\nBest IoU: {best_miou:.2f}% at epoch {best_epoch+1}')
-
+    print(f'\nBest mIoU: {best_miou:.2f}% at epoch {best_epoch+1}')
     for class_name, iou in zip(class_names, best_class_iou):
         print(f'{class_name}: {iou:.2f}%', end=' ')
 
