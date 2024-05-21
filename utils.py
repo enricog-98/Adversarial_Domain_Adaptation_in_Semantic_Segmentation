@@ -2,6 +2,17 @@ import numpy as np
 import torch
 import time
 from fvcore.nn import FlopCountAnalysis, flop_count_table
+import matplotlib.pyplot as plt
+
+def plot_miou_over_epochs(all_train_miou, all_test_miou, early_stop_epoch):
+    plt.plot(all_train_miou, label='Train')
+    plt.plot(all_test_miou, label='Test')
+    plt.axvline(x=early_stop_epoch, color='r', linestyle='--', label='Early Stopping Epoch')
+    plt.xlabel('Epoch')
+    plt.ylabel('mIoU%')
+    plt.legend()
+    plt.show()
+
 
 def test_latency_FPS(model, device, height, width):
     image = torch.randn(1, 3, height, width).to(device)
@@ -27,6 +38,7 @@ def test_latency_FPS(model, device, height, width):
     std_FPS = np.std(FPS)
     
     return 'Mean latency: {:.4f} +/- {:.4f} seconds \nMean FPS: {:.2f} +/- {:.2f} frames per second'.format(mean_latency, std_latency, mean_FPS, std_FPS)
+
 
 def test_FLOPs_params(model, device, height, width):
     image = torch.zeros(1, 3, height, width).to(device)
