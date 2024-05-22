@@ -14,16 +14,33 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
     all_test_miou = []
     
     for epoch in range(n_epochs):
+        
         start = time.time()
+        
         model.train()
         train_hist = np.zeros((n_classes, n_classes))
-        train_loop = tqdm(enumerate(train_dataloader), total=len(train_dataloader), leave=False)
+        train_loop = tqdm(enumerate(train_dataloader), total=len(train_dataloader), leave=False)        
         for i, (inputs, labels) in train_loop:
+            if i == 15:
+                break
             inputs, labels = inputs.to(device), labels.to(device)
             
             optimizer.zero_grad()
-            outputs, _, _ = model(inputs)
-            loss = criterion(outputs, labels)
+            
+            if model_name == 'DeepLabV2':
+                outputs, _, _ = model(inputs)
+
+                loss = criterion(outputs, labels)
+
+            elif model_name == 'BiSeNet':
+                outputs, aux_outputs1, aux_outputs2 = model(inputs)
+                #outputs = (outputs + aux_outputs1 + aux_outputs2) / 3                
+                
+                main_loss = criterion(outputs, labels)
+                aux_loss1 = criterion(aux_outputs1, labels)
+                aux_loss2 = criterion(aux_outputs2, labels)
+                loss = main_loss + 1 * (aux_loss1 + aux_loss2)
+
             loss.backward()
 
             if lr_schedule is True:
@@ -31,6 +48,7 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
             optimizer.step()
 
             predictions = torch.argmax(outputs, dim=1)
+
             train_hist += fast_hist(labels.numpy(), predictions.numpy(), n_classes)
             train_loop.set_description(f'Epoch {epoch+1}/{n_epochs} (Train)')
             
@@ -43,6 +61,8 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
         test_loop = tqdm(enumerate(test_dataloader), total=len(test_dataloader), leave=False)
         with torch.no_grad():
             for i, (inputs, labels) in test_loop:
+                if i == 5:
+                    break
                 inputs, labels = inputs.to(device), labels.to(device)
                 
                 outputs = model(inputs)
@@ -50,7 +70,6 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
 
                 predictions = torch.argmax(outputs, dim=1)
                 test_hist += fast_hist(labels.numpy(), predictions.numpy(), n_classes)
-                
                 test_loop.set_description(f'Epoch {epoch+1}/{n_epochs} (Test)')
                             
         test_class_iou = 100*per_class_iou(test_hist)
@@ -62,16 +81,13 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
             'epoch': epoch+1,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
-            'train_iou': train_miou,
-            'test_iou': test_miou,
-            'best_miou': best_miou,
-            'best_class_iou': best_class_iou,
-            'best_epoch': best_epoch
+            'train_class_iou': train_class_iou,
+            'train_miou': train_miou,
+            'test_class_iou': test_class_iou,
+            'test_miou': test_miou,
         }
 
-        #Save checkpoint every 5 epochs
-        #if (epoch+1) % 5 == 0:
-            #torch.save(checkpoint, f'checkpoints/{model_name}_checkpoint_epoch_{epoch+1}.pth')
+        #torch.save(checkpoint, f'checkpoints/{model_name}_checkpoint_epoch_{epoch+1}.pth')
         
         #Early stopping condition
         if test_miou > best_miou:
