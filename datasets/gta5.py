@@ -7,13 +7,15 @@ from torch.utils.data import Dataset
 import numpy as np
 from torchvision import transforms
 from torchvision.transforms import Lambda
+import random
 
 class GTA5Custom(Dataset):
-    def __init__(self, root_dir, height, width):
+    def __init__(self, root_dir, height, width, augment):
         super(GTA5Custom, self).__init__()
         self.root_dir = root_dir
         self.height = height
         self.width = width
+        self.augment = augment
         self.color_to_id = {
             (128, 64, 128):0,   #road
             (244, 35, 232): 1,  # sidewalk
@@ -59,9 +61,13 @@ class GTA5Custom(Dataset):
 
     def __getitem__(self, idx):
         image = Image.open(self.images[idx])
-        image = self.transform_image(image)
-        
         label = Image.open(self.labels[idx]).convert('RGB')
+
+        # Apply augmentations
+        if self.augment is not None and random.random() < 0.5:
+            image = self.augment(image)
+            
+        image = self.transform_image(image)
         label = self.transform_label(label)
         label = self.map_color_to_class(label)
         

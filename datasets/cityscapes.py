@@ -45,9 +45,9 @@ class CityscapesCustom(Dataset):
 
     def __getitem__(self, idx):
         image = Image.open(self.images[idx]).convert('RGB')
-        image = self.transform_image(image)
-        
         label = Image.open(self.labels[idx]).convert('L')
+        
+        image = self.transform_image(image)
         label = self.transform_label(label)
         
         return image, label
