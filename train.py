@@ -21,26 +21,14 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
         train_hist = np.zeros((n_classes, n_classes))
         train_loop = tqdm(enumerate(train_dataloader), total=len(train_dataloader), leave=False)        
         for i, (inputs, labels) in train_loop:
-            if i == 15:
+            if i == 10:
                 break
             inputs, labels = inputs.to(device), labels.to(device)
             
             optimizer.zero_grad()
-            
-            if model_name == 'DeepLabV2':
-                outputs, _, _ = model(inputs)
+            outputs, _, _ = model(inputs)
 
-                loss = criterion(outputs, labels)
-
-            elif model_name == 'BiSeNet':
-                outputs, aux_outputs1, aux_outputs2 = model(inputs)
-                #outputs = (outputs + aux_outputs1 + aux_outputs2) / 3                
-                
-                main_loss = criterion(outputs, labels)
-                aux_loss1 = criterion(aux_outputs1, labels)
-                aux_loss2 = criterion(aux_outputs2, labels)
-                loss = main_loss + 1 * (aux_loss1 + aux_loss2)
-
+            loss = criterion(outputs, labels)    
             loss.backward()
 
             if lr_schedule is True:
@@ -61,13 +49,12 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
         test_loop = tqdm(enumerate(test_dataloader), total=len(test_dataloader), leave=False)
         with torch.no_grad():
             for i, (inputs, labels) in test_loop:
-                if i == 5:
+                if i == 3:
                     break
                 inputs, labels = inputs.to(device), labels.to(device)
                 
                 outputs = model(inputs)
-                loss = criterion(outputs, labels)
-
+                
                 predictions = torch.argmax(outputs, dim=1)
                 test_hist += fast_hist(labels.numpy(), predictions.numpy(), n_classes)
                 test_loop.set_description(f'Epoch {epoch+1}/{n_epochs} (Test)')
@@ -98,12 +85,11 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
 
         end = time.time()
 
-        print(f'Epoch {epoch+1}/{n_epochs} [{(end-start) // 60:.0f}m {(end-start) % 60:.0f}s]')
-        print(f'Train mIoU: {train_miou:.2f}%, Test mIoU: {test_miou:.2f}%')
+        print(f'Epoch {epoch+1}/{n_epochs} [{(end-start) // 60:.0f}m {(end-start) % 60:.0f}s]: Train mIoU={train_miou:.2f}%, Test mIoU={test_miou:.2f}%')
         for class_name, iou in zip(class_names, test_class_iou):
             print(f'{class_name}: {iou:.2f}%', end=' ')
 
-    print(f'\nBest mIoU: {best_miou:.2f}% at epoch {best_epoch+1}')
+    print(f'\nBest mIoU={best_miou:.2f}% at epoch {best_epoch+1}')
     for class_name, iou in zip(class_names, best_class_iou):
         print(f'{class_name}: {iou:.2f}%', end=' ')
 
