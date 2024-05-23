@@ -60,7 +60,7 @@ class GTA5Custom(Dataset):
             self.labels.append(os.path.join(self.labels_dir, image))
 
     def __getitem__(self, idx):
-        image = Image.open(self.images[idx])
+        image = Image.open(self.images[idx]).convert('RGB')
         label = Image.open(self.labels[idx]).convert('RGB')
 
         # Apply augmentations
