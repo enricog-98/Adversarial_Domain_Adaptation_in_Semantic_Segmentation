@@ -13,6 +13,7 @@ def plot_miou_over_epochs(all_train_miou, all_test_miou, best_epoch):
     plt.ylabel('mIoU%')
     plt.legend()
     plt.show()
+    plt.savefig('miou_over_epochs.png')
 
 
 def test_latency_FPS(model, device, height, width):
