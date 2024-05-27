@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from utils import poly_lr_scheduler, fast_hist, per_class_iou
 
-def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, class_names, device, n_epochs, lr_schedule, model_name):    
+def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, class_names, device, n_epochs, model_name):    
     n_classes = len(class_names)
     best_miou = 0.0
     best_class_iou = np.zeros(n_classes)
@@ -21,8 +21,6 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
         train_hist = np.zeros((n_classes, n_classes))
         train_loop = tqdm(enumerate(train_dataloader), total=len(train_dataloader), leave=False)        
         for i, (inputs, labels) in train_loop:
-            if i == 10:
-                break
             inputs, labels = inputs.to(device), labels.to(device)
             
             optimizer.zero_grad()
@@ -31,8 +29,7 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
             loss = criterion(outputs, labels)    
             loss.backward()
 
-            if lr_schedule is True:
-                poly_lr_scheduler(optimizer, init_lr=2.5e-2, iter=epoch, max_iter=n_epochs)       
+            poly_lr_scheduler(optimizer, init_lr=2.5e-2, iter=epoch, max_iter=n_epochs)       
             optimizer.step()
 
             predictions = torch.argmax(outputs, dim=1)
@@ -49,8 +46,6 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
         test_loop = tqdm(enumerate(test_dataloader), total=len(test_dataloader), leave=False)
         with torch.no_grad():
             for i, (inputs, labels) in test_loop:
-                if i == 3:
-                    break
                 inputs, labels = inputs.to(device), labels.to(device)
                 
                 outputs = model(inputs)
