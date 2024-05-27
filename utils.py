@@ -5,15 +5,15 @@ from fvcore.nn import FlopCountAnalysis, flop_count_table
 import matplotlib.pyplot as plt
 
 
-def plot_miou_over_epochs(all_train_miou, all_test_miou, best_epoch):
+def plot_miou_over_epochs(all_train_miou, all_test_miou, best_epoch, model_name):
     plt.plot(all_train_miou, label='Train')
     plt.plot(all_test_miou, label='Test')
     plt.axvline(x=best_epoch, color='r', linestyle='--', label='Best Epoch')
     plt.xlabel('Epoch')
     plt.ylabel('mIoU%')
     plt.legend()
+    plt.savefig(f'plots/{model_name}_mIoU_over_epochs.png')
     plt.show()
-    plt.savefig('miou_over_epochs.png')
 
 
 def test_latency_FPS(model, device, height, width):
