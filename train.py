@@ -81,7 +81,7 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
 
         end = time.time()
 
-        print(f'Epoch {epoch+1}/{n_epochs} [{(end-start) // 60:.0f}m {(end-start) % 60:.0f}s]: Train mIoU={train_miou:.2f}%, Test mIoU={test_miou:.2f}%')
+        print(f'\nEpoch {epoch+1}/{n_epochs} [{(end-start) // 60:.0f}m {(end-start) % 60:.0f}s]: Train mIoU={train_miou:.2f}%, Test mIoU={test_miou:.2f}%')
         for class_name, iou in zip(class_names, test_class_iou):
             print(f'{class_name}: {iou:.2f}%', end=' ')
 
