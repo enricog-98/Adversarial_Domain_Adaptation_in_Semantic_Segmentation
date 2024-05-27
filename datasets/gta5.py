@@ -16,6 +16,8 @@ class GTA5Custom(Dataset):
         self.height = height
         self.width = width
         self.augment = augment
+
+        #Map from color to corresponding class of Cityscapes
         self.color_to_id = {
             (128, 64, 128):0,   #road
             (244, 35, 232): 1,  # sidewalk
@@ -63,7 +65,7 @@ class GTA5Custom(Dataset):
         image = Image.open(self.images[idx]).convert('RGB')
         label = Image.open(self.labels[idx]).convert('RGB')
 
-        # Apply augmentations
+        #Apply augmentation with 50% probability, if present
         if self.augment is not None and random.random() < 0.5:
             image = self.augment(image)
             
@@ -77,13 +79,13 @@ class GTA5Custom(Dataset):
         return len(self.images)
 
     def map_color_to_class(self, label):
-        # Convert the RGB image to a single integer value
+        #Convert the RGB image to a single integer value
         label_int = label[:, :, 0]*256*256 + label[:, :, 1]*256 + label[:, :, 2]
 
-        # Create a tensor of the same shape as the input image, filled with 255 (the class id for 'unlabeled')
+        #Create a tensor of the same shape as the input image, filled with 255 (the class for 'unlabeled')
         class_id_image = torch.full_like(label_int, 255)
 
-        # Replace each unique color value with the corresponding class id
+        #Replace each unique color value with the corresponding class
         for color, class_id in self.color_to_id.items():
             color_int = color[0]*256*256 + color[1]*256 + color[2]
             class_id_image = torch.where(label_int == color_int, class_id, class_id_image)

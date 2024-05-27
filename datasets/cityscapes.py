@@ -35,6 +35,7 @@ class CityscapesCustom(Dataset):
         self.images = []
         self.labels = []
 
+        #Iterate over all the cities in the split folder
         for city in self.cities_folders:
             city_images = os.listdir(os.path.join(self.images_dir, city))
             city_labels = os.listdir(os.path.join(self.labels_dir, city))
@@ -54,3 +55,8 @@ class CityscapesCustom(Dataset):
 
     def __len__(self):
         return len(self.images)
+    
+    def get_class_names(self):
+        return ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light', 'traffic sign',
+                'vegetation', 'terrain', 'sky', 'person', 'rider', 'car', 'truck', 'bus', 'train',
+                'motorcycle', 'bicycle']

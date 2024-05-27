@@ -4,6 +4,7 @@ import time
 from fvcore.nn import FlopCountAnalysis, flop_count_table
 import matplotlib.pyplot as plt
 
+
 def plot_miou_over_epochs(all_train_miou, all_test_miou, best_epoch):
     plt.plot(all_train_miou, label='Train')
     plt.plot(all_test_miou, label='Test')
@@ -46,8 +47,7 @@ def test_FLOPs_params(model, device, height, width):
     return flop_count_table(flops)
 
 
-def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1,
-                      max_iter=50, power=0.9):
+def poly_lr_scheduler(optimizer, init_lr, iter, max_iter, lr_decay_iter=1, power=0.9):
     """Polynomial decay of learning rate
             :param init_lr is base learning rate
             :param iter is a current iteration
@@ -56,21 +56,17 @@ def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1,
             :param power is a polymomial power
 
     """
-    # if iter % lr_decay_iter or iter > max_iter:
-    # 	return optimizer
+    #if iter % lr_decay_iter or iter > max_iter:
+        #return optimizer
 
     lr = init_lr*(1 - iter/max_iter)**power
     optimizer.param_groups[0]['lr'] = lr
     return lr
 
 
-def fast_hist(label, predict, n):
-    '''
-    a and b are predict and mask respectively
-    n is the number of classes
-    '''
-    k = (label >= 0) & (label < n)
-    return np.bincount(n * label[k].astype(int) + predict[k], minlength=n ** 2).reshape(n, n)
+def fast_hist(label, predict, num_classes):
+    k = (label >= 0) & (label < num_classes)
+    return np.bincount(num_classes * label[k].astype(int) + predict[k], minlength=num_classes ** 2).reshape(num_classes, num_classes)
 
 
 def per_class_iou(hist):
