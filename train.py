@@ -34,7 +34,7 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
 
             predictions = torch.argmax(outputs, dim=1)
 
-            train_hist += fast_hist(labels.numpy(), predictions.numpy(), n_classes)
+            train_hist += fast_hist(labels.cpu().numpy(), predictions.cpu().numpy(), n_classes)
             train_loop.set_description(f'Epoch {epoch+1}/{n_epochs} (Train)')
             
         train_class_iou = 100*per_class_iou(train_hist)
@@ -51,7 +51,7 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
                 outputs = model(inputs)
                 
                 predictions = torch.argmax(outputs, dim=1)
-                test_hist += fast_hist(labels.numpy(), predictions.numpy(), n_classes)
+                test_hist += fast_hist(labels.cpu().numpy(), predictions.cpu().numpy(), n_classes)
                 test_loop.set_description(f'Epoch {epoch+1}/{n_epochs} (Test)')
                             
         test_class_iou = 100*per_class_iou(test_hist)
