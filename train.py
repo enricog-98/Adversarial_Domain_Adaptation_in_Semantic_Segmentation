@@ -69,14 +69,14 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
             'test_miou': test_miou,
         }
 
-        #torch.save(checkpoint, f'checkpoints/{model_name}_checkpoint_epoch_{epoch+1}.pth')
+        torch.save(checkpoint, f'checkpoints/{model_name}_checkpoint_epoch_{epoch+1}.pth')
         
         #Early stopping condition
         if test_miou > best_miou:
             best_miou = test_miou
             best_class_iou = test_class_iou
             best_epoch = epoch
-            #torch.save(checkpoint, f'checkpoints/{model_name}_best_epoch_{epoch+1}.pth')
+            torch.save(checkpoint, f'checkpoints/{model_name}_best_epoch_{epoch+1}.pth')
 
         end = time.time()
 
