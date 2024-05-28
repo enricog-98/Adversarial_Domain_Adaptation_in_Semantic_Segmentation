@@ -7,7 +7,7 @@ from utils import poly_lr_scheduler, fast_hist, per_class_iou
 
 def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, class_names, device, n_epochs, model_name):    
     n_classes = len(class_names)
-    initial_lr = optimizer.param_groups[0]['lr']
+    #initial_lr = optimizer.param_groups[0]['lr']
     best_miou = 0.0
     best_class_iou = np.zeros(n_classes)
     best_epoch = 0
@@ -30,7 +30,7 @@ def train_model(model, criterion, optimizer, train_dataloader, test_dataloader, 
             loss = criterion(outputs, labels)    
             loss.backward()
 
-            poly_lr_scheduler(optimizer, init_lr=initial_lr, iter=epoch, max_iter=n_epochs)       
+            #poly_lr_scheduler(optimizer, init_lr=initial_lr, iter=epoch, max_iter=n_epochs)       
             optimizer.step()
 
             predictions = torch.argmax(outputs, dim=1)
