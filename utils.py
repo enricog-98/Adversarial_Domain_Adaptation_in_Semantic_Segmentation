@@ -17,7 +17,7 @@ def plot_miou_over_epochs(all_train_miou, all_test_miou, best_epoch, model_name)
 
 
 def test_latency_FPS(model, device, height, width):
-    image = torch.randn(1, 3, height, width).to(device)
+    image = torch.randn(8, 3, height, width).to(device)
     iterations = 1000
     latency = []
     FPS = []
@@ -43,7 +43,7 @@ def test_latency_FPS(model, device, height, width):
 
 
 def test_FLOPs_params(model, device, height, width):
-    image = torch.zeros(1, 3, height, width).to(device)
+    image = torch.zeros(8, 3, height, width).to(device)
     flops = FlopCountAnalysis(model, image)
     return flop_count_table(flops)
 
